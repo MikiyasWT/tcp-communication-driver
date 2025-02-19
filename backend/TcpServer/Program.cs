@@ -30,6 +30,7 @@ class TcpServer
         {
             try
             {
+                
                 while (true)
                 {
                     byte[] buffer = new byte[1024];
