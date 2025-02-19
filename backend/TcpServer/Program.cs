@@ -3,21 +3,30 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+using Serilog;
 
 class TcpServer
 {
+    private static ILogger log;
+
     static async Task Main()
     {
+    log = new LoggerConfiguration()
+            .WriteTo.Console()
+            .WriteTo.File("logs/tcpserver.log", rollingInterval: RollingInterval.Day)
+            .CreateLogger();
+
         int port = 5000;
         TcpListener server = new TcpListener(IPAddress.Any, port);
         server.Start();
 
-        Console.WriteLine($"[SERVER] Listening on port {port}...");
+        log.Information($"[SERVER] Listening on port {port}...");
 
         while (true)
         {
             TcpClient client = await server.AcceptTcpClientAsync();
-            Console.WriteLine("[SERVER] Client connected!");
+            var remoteEndPoint = client.Client.RemoteEndPoint as IPEndPoint;
+            log.Information($"[SERVER] Client connected from {remoteEndPoint?.Address}:{remoteEndPoint?.Port}");
 
             // Handle each client in a new task
             Task.Run(() => HandleClient(client));
@@ -30,7 +39,7 @@ class TcpServer
         {
             try
             {
-                
+
                 while (true)
                 {
                     byte[] buffer = new byte[1024];
@@ -38,7 +47,7 @@ class TcpServer
                     if (bytesRead == 0) break; // Client disconnected
 
                     string request = Encoding.UTF8.GetString(buffer, 0, bytesRead).Trim();
-                    Console.WriteLine($"[SERVER] Received: {request}");
+                    log.Information($"[SERVER] Received: {request}");
 
                     string response = ProcessCommand(request);
 
@@ -48,12 +57,12 @@ class TcpServer
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[SERVER] Error: {ex.Message}");
+                log.Error(ex, "[SERVER] An error occurred");
             }
             finally
             {
                 client.Close();
-                Console.WriteLine("[SERVER] Client disconnected.");
+                log.Information("[SERVER] Client disconnected.");
             }
         }
     }
