@@ -8,6 +8,7 @@ using Serilog;
 class TcpServer
 {
     private static ILogger log;
+    private static Random random = new Random();
 
     static async Task Main()
     {
@@ -72,7 +73,9 @@ class TcpServer
         switch (command)
         {
             case "GET_TEMP":
-                return "Temperature: 25.3°C";
+                //temperature will be show randomly from 14 to 47
+                int temperature = random.Next(14, 47);
+                return $"Temperature: {temperature}°C";
             case "GET_STATUS":
                 return "Status: Active";
             default:
