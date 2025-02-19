@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using TcpWebApi.Contracts;
 using TcpWebApi.Services;
+using TcpWebApi.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,11 +23,14 @@ builder.Services.AddCors(options =>
 });
 
 
-builder.Services.AddSingleton<ILoggingService, LoggingService>();
+// builder.Services.AddSingleton<ILoggingService, LoggingService>();
 
+// builder.Services.AddTransient<GlobalExceptionHandlingMiddleware>();
+
+builder.Services.AddSingleton<ILoggingService, LoggingService>();
+builder.Services.AddTransient<GlobalExceptionHandlingMiddleware>();
 
 var app = builder.Build();
-
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -42,5 +46,7 @@ app.UseCors("CorsPolicy");
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
 app.Run();

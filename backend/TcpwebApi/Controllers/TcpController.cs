@@ -12,8 +12,8 @@ namespace TcpWebApi.Controllers
     public class TcpController : ControllerBase
     {
         private readonly ILoggingService _logger;
-        private readonly string serverIp = "127.0.0.1";
-        private readonly int serverPort = 5000;
+        private readonly string _serverIp = "127.0.0.1";
+        private readonly int _serverPort = 5000;
 
         public TcpController(ILoggingService logger)
         {
@@ -22,33 +22,24 @@ namespace TcpWebApi.Controllers
 
         private async Task<string> SendTcpCommand(string command)
         {
-            try
-            {
-                using (TcpClient client = new TcpClient(serverIp, serverPort))
-                using (NetworkStream stream = client.GetStream())
-                {
-                    byte[] data = Encoding.UTF8.GetBytes(command);
-                    await stream.WriteAsync(data, 0, data.Length);
+            using var client = new TcpClient();
+            await client.ConnectAsync(_serverIp, _serverPort);
 
-                    byte[] buffer = new byte[1024];
-                    int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
-                    string response = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+            using NetworkStream stream = client.GetStream();
+            byte[] data = Encoding.UTF8.GetBytes(command);
+            await stream.WriteAsync(data, 0, data.Length);
 
-                    _logger.LogInformation("[WEB API] Sent command: {Command}, Received response: {Response}", command, response);
-                    return response;
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "[WEB API] Error sending TCP command");
-                return $"Error: {ex.Message}";
-            }
+            byte[] buffer = new byte[1024];
+            int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+            string response = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+
+            _logger.LogInfo("[WEB API] Sent command: {Command}, Received response: {Response}", command, response);
+            return response;
         }
 
         [HttpGet("get-temp")]
         public async Task<IActionResult> GetTemperature()
         {
-            _logger.LogInformation("[WEB API] Received request: GET_TEMP");
             string response = await SendTcpCommand("GET_TEMP");
             return Ok(new { message = response });
         }
@@ -56,7 +47,6 @@ namespace TcpWebApi.Controllers
         [HttpGet("get-status")]
         public async Task<IActionResult> GetStatus()
         {
-            _logger.LogInformation("[WEB API] Received request: GET_STATUS");
             string response = await SendTcpCommand("GET_STATUS");
             return Ok(new { message = response });
         }

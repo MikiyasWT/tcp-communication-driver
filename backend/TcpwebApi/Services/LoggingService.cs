@@ -1,4 +1,3 @@
-using System;
 using Serilog;
 using TcpWebApi.Contracts;
 
@@ -12,13 +11,23 @@ namespace TcpWebApi.Services
         {
             _logger = new LoggerConfiguration()
                 .WriteTo.Console()
-                .WriteTo.File("logs/webapi.log", rollingInterval: RollingInterval.Day)
+                .WriteTo.File("logs/logsof.log", rollingInterval: RollingInterval.Day)
                 .CreateLogger();
         }
 
-        public void LogInformation(string message, params object[] args)
+        public void LogInfo(string message, params object[] args)
         {
             _logger.Information(message, args);
+        }
+
+        public void LogWarn(string message, params object[] args)
+        {
+            _logger.Warning(message, args);
+        }
+
+        public void LogDebug(string message, params object[] args)
+        {
+            _logger.Debug(message, args);
         }
 
         public void LogError(Exception ex, string message, params object[] args)
